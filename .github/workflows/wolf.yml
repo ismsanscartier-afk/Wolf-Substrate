@@ -1,0 +1,12 @@
+name: Wolf_Brain
+on:
+  repository_dispatch:
+    types: [wolf_command]
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Think
+        run: |
+          echo "The Wolf is processing your request..."
+          # This is where the AI logic lives
