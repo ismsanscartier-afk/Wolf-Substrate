@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wolf Amalgamation | Substrate</title>
+    <style>
+        :root { --bg: #0d1117; --text: #c9d1d9; --accent: #3fb950; }
+        body { background: var(--bg); color: var(--text); font-family: monospace; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 10px; box-sizing: border-box; }
+        #chat { flex: 1; overflow-y: auto; padding: 10px; border: 1px solid #30363d; background: #161b22; margin-bottom: 10px; border-radius: 8px; }
+        .msg { margin-bottom: 15px; padding: 10px; border-radius: 6px; line-height: 1.4; }
+        .user { border-left: 4px solid #58a6ff; background: #21262d; }
+        .wolf { border-left: 4px solid var(--accent); background: #0d1117; }
+        #input-area { display: flex; gap: 8px; padding-bottom: 10px; }
+        input { flex: 1; background: #21262d; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 6px; font-size: 16px; }
+        button { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:disabled { opacity: 0.5; }
+    </style>
+</head>
+<body>
+    <h3 style="margin-top: 0;">⧫ WOLF_NODE_v2.5</h3>
+    <div id="chat"><div class="msg wolf"><b>The Wolf:</b> Substrate active. Ready to execute, Architect.</div></div>
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="Enter command...">
+        <button id="send-btn">EXECUTE</button>
+    </div>
+
+<script>
+    // --- Architect Identity ---
+    const CONFIG = {
+        user: "ismsanscartier-afk",
+        repo: "WOLF_SUBSTRATE",
+        // This avoids the GitHub Security block by asking you for the key when the page loads
+        token: localStorage.getItem('wolf_token') || prompt("Enter Architect Token (ghp_...):")
+    };
+
+    // Save token to browser so it doesn't ask every time
+    if (CONFIG.token) { localStorage.setItem('wolf_token', CONFIG.token); }
+
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('user-input');
+    const btn = document.getElementById('send-btn');
+
+    function addMsg(role, text) {
+        const d = document.createElement('div');
+        d.className = `msg ${role}`;
+        d.innerHTML = `<b>${role.toUpperCase()}:</b> ${text}`;
+        chat.appendChild(d);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function trigger() {
+        const msg = input.value.trim();
+        if (!msg || btn.disabled) return;
+        
+        addMsg('user', msg);
+        input.value = "";
+        btn.innerText = "WAITING...";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`https://api.github.com/repos/${CONFIG.user}/${CONFIG.repo}/dispatches`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${CONFIG.token}`, 
+                    'Accept': 'application/vnd.github.v3+json' 
+                },
+                body: JSON.stringify({ event_type: "wolf_command", client_payload: { message: msg } })
+            });
+            
+            if (!res.ok) throw new Error("Trigger failed");
+
+            // Poll for response.json
+            const poll = setInterval(async () => {
+                const responseFetch = await fetch(`https://raw.githubusercontent.com/${CONFIG.user}/${CONFIG.repo}/main/response.json?t=${Date.now()}`);
+                if (responseFetch.ok) {
+                    const data = await responseFetch.json();
+                    if (data.status === "ready") {
+                        addMsg('wolf', data.text);
+                        clearInterval(poll);
+                        btn.innerText = "EXECUTE";
+                        btn.disabled = false;
+                    }
+                }
+            }, 4000);
+
+        } catch (e) {
+            addMsg('wolf', "❌ Substrate Error: Check your Token or Actions Permissions.");
+            btn.innerText = "RETRY";
+            btn.disabled = false;
+        }
+    }
+
+    btn.onclick = trigger;
+    input.onkeypress = (e) => { if(e.key === 'Enter') trigger(); };
+</script>
+</body>
+</html>
