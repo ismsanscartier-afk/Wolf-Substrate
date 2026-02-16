@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WOLF SUBSTRATE</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; text-align: center; }
+        input { background: #111; color: #0f0; border: 1px solid #0f0; width: 90%; padding: 12px; margin: 10px 0; font-size: 16px; }
+        button { background: #0f0; color: #000; border: none; padding: 15px; cursor: pointer; width: 95%; font-weight: bold; }
+        #log { margin-top: 30px; border-top: 1px solid #333; padding-top: 15px; color: #888; }
+    </style>
+</head>
+<body>
+    <h1>🐺 WOLF_SYSTEM_PORTAL</h1>
+    <input type="password" id="token" placeholder="PASTE GHP TOKEN HERE">
+    <input type="text" id="cmd" placeholder="WOLF, STATUS REPORT">
+    <button onclick="execute()">EXECUTE COMMAND</button>
+    <div id="log">SYSTEM READY...</div>
+
+    <script>
+        async function execute() {
+            const token = document.getElementById('token').value.trim();
+            const cmd = document.getElementById('cmd').value;
+            const log = document.getElementById('log');
+            log.innerHTML = "📡 SENDING SIGNAL...";
+
+            try {
+                const response = await fetch('https://api.github.com/repos/ismsanscartier-afk/Wolf-Substrate/dispatches', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'token ' + token,
+                        'Accept': 'application/vnd.github+json'
+                    },
+                    body: JSON.stringify({
+                        event_type: "wolf_command",
+                        client_payload: { message: cmd }
+                    })
+                });
+
+                if (response.status === 204) {
+                    log.innerHTML = "✅ SIGNAL ACCEPTED. WOLF IS PROCESSING.";
+                } else if (response.status === 401) {
+                    log.innerHTML = "❌ TOKEN REJECTED. CHECK PERMISSIONS.";
+                } else {
+                    log.innerHTML = "❌ SYSTEM ERROR: " + response.status;
+                }
+            } catch (err) {
+                log.innerHTML = "❌ CONNECTION FAILED: " + err.message;
+            }
+        }
+    </script>
+</body>
+</html>
