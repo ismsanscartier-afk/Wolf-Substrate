@@ -1,0 +1,12 @@
+name: Wolf_Brain
+on:
+  repository_dispatch:
+    types: [wolf_command]
+jobs:
+  think:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Process Command
+        run: |
+          echo "Wolf has received your signal."
+          echo "Status: Active"
